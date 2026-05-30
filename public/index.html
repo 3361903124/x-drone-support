@@ -66,7 +66,6 @@
     </div>
 
     <script>
-        // 始终使用相对路径（前后端同域）
         const API_BASE = '';
 
         const userId = 'user_' + Math.random().toString(36).substr(2, 9);
@@ -136,10 +135,11 @@
             return div.innerHTML;
         }
 
-        // 将 UTC 时间字符串转换为本地时间格式（YYYY-MM-DD HH:MM:SS）
+        // 将 UTC 时间字符串（"YYYY-MM-DD HH:MM:SS"）转换为本地时间字符串
         function formatLocalTime(utcString) {
-            const date = new Date(utcString);
-            if (isNaN(date.getTime())) return utcString; // 容错
+            // 后端返回的是 UTC 时间，加上 "Z" 强制解析为 UTC
+            const date = new Date(utcString + 'Z');
+            if (isNaN(date.getTime())) return utcString;
             const year = date.getFullYear();
             const month = String(date.getMonth() + 1).padStart(2, '0');
             const day = String(date.getDate()).padStart(2, '0');
@@ -154,7 +154,6 @@
                 const logs = await fetch(`${API_BASE}/api/admin/conversations`).then(r => r.json());
                 const logBody = document.querySelector('#logTable tbody');
                 logBody.innerHTML = logs.map(l => {
-                    // 转换时间为本地格式
                     const localTime = formatLocalTime(l.timestamp);
                     return `
                         <tr>
