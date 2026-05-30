@@ -47,7 +47,9 @@
         <div id="admin-view" class="hidden">
             <h3>📊 最近对话记录</h3>
             <table id="logTable">
-                <thead><tr><th>时间</th><th>用户ID</th><th>会话ID</th><th>提问</th><th>AI回复</th></tr></thead>
+                <thead>
+                    <tr><th>时间</th><th>用户ID</th><th>会话ID</th><th>提问</th><th>AI回复</th></tr>
+                </thead>
                 <tbody></tbody>
             </table>
             <h3>📚 FAQ 管理</h3>
@@ -64,7 +66,7 @@
     </div>
 
     <script>
-        // ✅ 关键修改：始终使用相对路径，因为前后端同域
+        // 始终使用相对路径（前后端同域）
         const API_BASE = '';
 
         const userId = 'user_' + Math.random().toString(36).substr(2, 9);
@@ -134,27 +136,48 @@
             return div.innerHTML;
         }
 
+        // 将 UTC 时间字符串转换为本地时间格式（YYYY-MM-DD HH:MM:SS）
+        function formatLocalTime(utcString) {
+            const date = new Date(utcString);
+            if (isNaN(date.getTime())) return utcString; // 容错
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            const seconds = String(date.getSeconds()).padStart(2, '0');
+            return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+        }
+
         async function loadAdminData() {
             try {
                 const logs = await fetch(`${API_BASE}/api/admin/conversations`).then(r => r.json());
                 const logBody = document.querySelector('#logTable tbody');
-                logBody.innerHTML = logs.map(l => `<td>
-                    <td>${escapeHtml(l.timestamp)}</td>
-                    <td>${escapeHtml(l.user_id)}</td>
-                    <td>${escapeHtml(l.session_id)}</td>
-                    <td>${escapeHtml(l.user_message)}</td>
-                    <td>${escapeHtml(l.ai_reply)}</td>
-                </tr>`).join('');
+                logBody.innerHTML = logs.map(l => {
+                    // 转换时间为本地格式
+                    const localTime = formatLocalTime(l.timestamp);
+                    return `
+                        <tr>
+                            <td>${escapeHtml(localTime)}</td>
+                            <td>${escapeHtml(l.user_id)}</td>
+                            <td>${escapeHtml(l.session_id)}</td>
+                            <td>${escapeHtml(l.user_message)}</td>
+                            <td>${escapeHtml(l.ai_reply)}</td>
+                        </tr>
+                    `;
+                }).join('');
             } catch(e) { console.error(e); }
 
             try {
                 const faqs = await fetch(`${API_BASE}/api/admin/faqs`).then(r => r.json());
                 const faqBody = document.querySelector('#faqTable tbody');
-                faqBody.innerHTML = faqs.map(f => `<tr>
-                    <td>${escapeHtml(f.question)}</td>
-                    <td>${escapeHtml(f.answer)}</td>
-                    <td><button onclick="deleteFaq('${f.question.replace(/'/g, "\\'")}')" style="background:#e74c3c;padding:5px 10px;">删除</button></td>
-                </table>`).join('');
+                faqBody.innerHTML = faqs.map(f => `
+                    <tr>
+                        <td>${escapeHtml(f.question)}</td>
+                        <td>${escapeHtml(f.answer)}</td>
+                        <td><button onclick="deleteFaq('${f.question.replace(/'/g, "\\'")}')" style="background:#e74c3c;padding:5px 10px;">删除</button></td>
+                    </tr>
+                `).join('');
             } catch(e) { console.error(e); }
         }
 
